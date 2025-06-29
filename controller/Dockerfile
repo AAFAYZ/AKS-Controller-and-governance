@@ -1,5 +1,5 @@
 ARG PYTHON_BASE_IMAGE_VERSION=3.13-slim
-FROM crakscloudmgmtprd01.azurecr.io/python:${PYTHON_BASE_IMAGE_VERSION}
+FROM <acrname>.azurecr.io/python:${PYTHON_BASE_IMAGE_VERSION}
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 # Can be overridden in build args if needed
