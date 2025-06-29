@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "workload-resource-controller.fullname" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "workload-resource-controller.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "workload-resource-controller.name" . }}
+    spec:
+{{- if .Values.controller.tolerations }}
+      tolerations:
+{{ toYaml .Values.controller.tolerations | indent 8 }}
+{{- end }}          
+      serviceAccountName: {{ include "workload-resource-controller.serviceAccountName" . }}
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+      containers:
+        - name: controller
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          {{- if .Values.controller.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.controller.probes.liveness.path }}
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: {{ .Values.controller.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.controller.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.controller.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.controller.probes.liveness.failureThreshold }}
+          {{- end }}
+          env:
+            - name: DELAY_BETWEEN_RESOURCES
+              value: {{ .Values.controller.delaybetweenvpakeda | quote }}
+            - name: AZURE_CLIENT_ID
+              value: {{ .Values.workloadIdentity.clientId | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.controller.loggingLevel | quote }}
+            - name: EXCLUDED_NAMESPACES
+              value: {{ .Values.controller.excludedNamespaces | join "," | quote }}
+            - name: MAX_WORKERS
+              value: "{{ .Values.controller.concurrency }}"
+            - name: RETRY_WAIT_MS
+              value: "{{ .Values.controller.retry.waitMs }}"
+            - name: RETRY_MAX_ATTEMPTS
+              value: "{{ .Values.controller.retry.maxAttempts }}"
+            - name: SLEEP_INTERVAL
+              value: "{{ .Values.controller.sleepInterval }}"
+          resources:
+            {{- toYaml .Values.controller.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
