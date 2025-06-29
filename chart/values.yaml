@@ -1,0 +1,54 @@
+image:
+  repository: crakscloudmgmtprd01.azurecr.io/workload-resource-controller
+  tag: "latest"
+  pullPolicy: IfNotPresent
+service:
+  port: 8080
+workloadIdentity:
+  clientId: c8a16366-ac70-4af8-9c11-a029ee637ca7
+  azureIdentityName: wlid-aks-c4e-prd-weu-01
+controller:
+  tolerations:
+  - key: "CriticalAddonsOnly"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+  delaybetweenvpakeda: 5
+  retry:
+    waitMs: 2000
+    maxAttempts: 5
+  loggingLevel: INFO
+  sleepInterval: 45
+  excludedNamespaces:
+  - kube-system
+  - ns-platform-ingress-nginx
+  - calico-system
+  - tigera-operator
+  - kube-node-lease
+  - kube-public
+  - dataprotection-microsoft
+  - twistlock #prisma
+  - ns-platform-cluster-resources
+  - default
+  - gatekeeper-system
+  concurrency: 10
+  probes:
+    liveness:
+      enabled: true
+      path: /livez
+      initialDelaySeconds: 60
+      timeoutSeconds: 25
+      periodSeconds: 15
+      failureThreshold: 5
+  resources:
+    limits:
+      cpu: "300m"
+      memory: "300Mi"
+    requests:
+      cpu: "200m"
+      memory: "200Mi"
+securityContext:
+  runAsUser: 1001 # Matching UID from Dockerfile
+  runAsGroup: 1001 # Matching GID from Dockerfile
+  fsGroup: 1001 # Ensures volume mounts are accessible by this group
+  allowprivilegedescalation: false
