@@ -15,14 +15,14 @@ spec:
 {{- if .Values.controller.tolerations }}
       tolerations:
 {{ toYaml .Values.controller.tolerations | indent 8 }}
-{{- end }}          
+{{- end }}
       serviceAccountName: {{ include "workload-resource-controller.serviceAccountName" . }}
       securityContext:
         runAsUser: {{ .Values.securityContext.runAsUser }}
         runAsGroup: {{ .Values.securityContext.runAsGroup }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       containers:
-        - name: controller
+        - name: workload-resource-controller
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -38,8 +38,10 @@ spec:
             failureThreshold: {{ .Values.controller.probes.liveness.failureThreshold }}
           {{- end }}
           env:
-            - name: DELAY_BETWEEN_RESOURCES
-              value: {{ .Values.controller.delaybetweenvpakeda | quote }}
+            - name: SLEEP_INTERVAL
+              value: {{ .Values.controller.periodReconcile | quote }}
+            - name: DAILY_CLEANUP_HOUR
+              value: "{{ .Values.controller.dailyCleanuptime }}"
             - name: AZURE_CLIENT_ID
               value: {{ .Values.workloadIdentity.clientId | quote }}
             - name: LOG_LEVEL
@@ -48,13 +50,17 @@ spec:
               value: {{ .Values.controller.excludedNamespaces | join "," | quote }}
             - name: MAX_WORKERS
               value: "{{ .Values.controller.concurrency }}"
-            - name: RETRY_WAIT_MS
-              value: "{{ .Values.controller.retry.waitMs }}"
-            - name: RETRY_MAX_ATTEMPTS
-              value: "{{ .Values.controller.retry.maxAttempts }}"
-            - name: SLEEP_INTERVAL
-              value: "{{ .Values.controller.sleepInterval }}"
+            - name: MAX_DELAY_MINUTES
+              value: "{{ .Values.controller.maxDelayMinutes }}"
           resources:
             {{- toYaml .Values.controller.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: workload-resource-controller-cm
+              mountPath: /app/config
+              readOnly: true
+      volumes:
+        - name: workload-resource-controller-cm
+          configMap:
+            name: {{ include "workload-resource-controller.fullname" . }}-cm
