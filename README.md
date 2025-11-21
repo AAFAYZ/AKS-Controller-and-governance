@@ -7,9 +7,11 @@ A Kubernetes controller that automates the creation and management of KEDA Scale
 - **Automated ScaledObject and VPA Creation**: Monitors Deployments and StatefulSets to ensure corresponding ScaledObjects and VPAs are present.
 - **ResourceQuota Enforcement**: Ensures each namespace has a default ResourceQuota.
 - **Namespace Exclusion**: Skips specified namespaces based on environment configuration.
+- **Pattern based Namespace Exclusion**: Skips wildcard based patterns in the namespaces.
 - **Health Check Endpoint**: Provides a `/livez` endpoint for liveness probes.
 - **Concurrent Processing**: Utilizes threading for efficient resource monitoring and management.
 - **Retry Mechanism**: Implements retries for resource creation and deletion to handle transient errors.
+- **Annotation based skipping**: When the annotation is provided in the metadata, the controller will skip attaching the resources
 
 ## ⚙️ Configuration
 

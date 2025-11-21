@@ -1,16 +1,16 @@
 trigger: none
 
 pool:
-  name: 'agent-name'
+  name: 'vmss-prd-runner'
 
 variables:
   - group: aks_as_service
   - name: azureContainerRegistry
-    value: 'ACR Name'
+    value: 'LZ'
   - name: pythonImageVersion
     value: '3.13-slim'
   - name: tag
-    value: 'latest'
+    value: '2.0'
 
 steps:
 - task: Bash@3
@@ -19,13 +19,13 @@ steps:
     targetType: 'inline'
     script: |
         az login --service-principal -u $(ARM_CLIENT_ID) -p $(ARM_CLIENT_SECRET) --tenant $(ARM_TENANT_ID) --output none
-        az acr login -n <acrname>
+        az acr login -n azureimg.azurecr.io
          # Check if the image with the specified version exists in ACR
-        IMAGE_TAG_EXISTS=$(az acr repository show-tags --name <acrname> --repository python -o tsv)
+        IMAGE_TAG_EXISTS=$(az acr repository show-tags --name azureimg --repository python -o tsv)
         if [ -z "$IMAGE_TAG_EXISTS" ]; then
             echo "Image version $(pythonImageVersion) not found in ACR. Pulling from Docker Hub and pushing to ACR..."
             docker pull python:$(pythonImageVersion)
-            docker tag python:$(pythonImageVersion) crakscloudmgmtprd01.azurecr.io/python:$(pythonImageVersion)
+            docker tag python:$(pythonImageVersion) azureimg.azurecr.io/python:$(pythonImageVersion)
             docker push crakscloudmgmtprd01.azurecr.io/python:$(pythonImageVersion)
         else
             echo "Image version $(pythonImageVersion) already exists in ACR. Skipping pull and push python image."
@@ -37,5 +37,5 @@ steps:
     containerRegistry: "$(azureContainerRegistry)"
     repository: 'workload-resource-controller'
     command: 'buildAndPush'
-    Dockerfile: 'controller/Dockerfile'
+    Dockerfile: 'workload_resource_controller/controller/Dockerfile'
     tags: $(tag)
