@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+kubernetes
+retrying
+pyyaml
+pytz
+kopf
