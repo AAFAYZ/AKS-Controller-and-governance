@@ -1,5 +1,5 @@
 apiVersion: v2
 name: workload-resource-controller
-description: A controller that creates VPA and KEDA resources and gets attached to the workloads automatically
-version: 1.0.0
-appVersion: "1.0"
+description: A controller that creates and deletes VPA and KEDA resources and gets attached to the workloads automatically
+version: 2.0.0
+appVersion: "2.0"

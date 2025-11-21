@@ -1,7 +1,7 @@
 image:
   repository: crakscloudmgmtprd01.azurecr.io/workload-resource-controller
-  tag: "latest"
-  pullPolicy: IfNotPresent
+  tag: "2.0"
+  pullPolicy: Always
 service:
   port: 8080
 workloadIdentity:
@@ -13,32 +13,17 @@ controller:
     operator: "Equal"
     value: "true"
     effect: "NoSchedule"
-  delaybetweenvpakeda: 5
-  retry:
-    waitMs: 2000
-    maxAttempts: 5
+  periodReconcile: 30
+  dailyCleanuptime: 18.00 #Make sure to write time in 24hour format and mention as floating value with . and not in :
+  maxDelayMinutes: 60
   loggingLevel: INFO
-  sleepInterval: 45
-  excludedNamespaces:
-  - kube-system
-  - ns-platform-ingress-nginx
-  - calico-system
-  - tigera-operator
-  - kube-node-lease
-  - kube-public
-  - dataprotection-microsoft
-  - twistlock #prisma
-  - ns-platform-cluster-resources
-  - default
-  - gatekeeper-system
-  concurrency: 10
   probes:
     liveness:
       enabled: true
       path: /livez
       initialDelaySeconds: 60
-      timeoutSeconds: 25
-      periodSeconds: 15
+      timeoutSeconds: 30
+      periodSeconds: 25
       failureThreshold: 5
   resources:
     limits:
@@ -47,6 +32,41 @@ controller:
     requests:
       cpu: "200m"
       memory: "200Mi"
+  excludedNamespaces:
+  - default
+  - kube-node-lease
+  - kube-public
+  - kube-system
+  - calico-system
+  - gatekeeper-system
+  - tigera-operator
+  - dataprotection-microsoft
+  - ns-platform-cluster-resources
+  - ns-platform-external-secrets
+  - ns-platform-ingress-nginx
+  - twistlock #prismas
+  - app-*
+  - code-*
+  - flux
+  - flux-system
+  - kube-green
+  - headlamp
+  - ns-*-devsecops
+  - qualys
+  concurrency: 10
+controllerConfig: |
+  vpa:
+    updateMode: Auto
+    minAllowed:
+      cpu: 10m
+      memory: 20Mi
+    maxAllowed:
+      cpu: 2
+      memory: 4Gi
+  scaledObject:
+    minReplicaCount: 2
+    maxReplicaCount: 10
+    cpuTriggerValue: "80"
 securityContext:
   runAsUser: 1001 # Matching UID from Dockerfile
   runAsGroup: 1001 # Matching GID from Dockerfile
