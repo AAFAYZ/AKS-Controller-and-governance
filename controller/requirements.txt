@@ -3,3 +3,5 @@ uvicorn
 kubernetes
 retrying
 pyyaml
+pytz
+kopf
